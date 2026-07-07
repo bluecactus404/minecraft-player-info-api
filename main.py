@@ -1,8 +1,8 @@
 import requests
 import base64
 import json
-
-#add custom header to let mojang know origin of requests
+import os
+from dotenv import load_dotenv
 
 USER_PROFILE_URL = "https://api.mojang.com/users/profiles/minecraft/"
 USER_SKIN_URL = "https://sessionserver.mojang.com/session/minecraft/profile/"
@@ -10,18 +10,25 @@ USER_SKIN_URL = "https://sessionserver.mojang.com/session/minecraft/profile/"
 
 class API():
     def __init__(self):
-        #set headder here later
-        pass
+        load_dotenv()
+        app_name = os.getenv("APP_NAME")
+        self.headers = {"app_name": app_name}
+
+    def do_request(self, url: str, extra: str):
+        request = requests.get(url + extra, headers = self.headers)
+        if request.status_code != 200:
+            print(f"!!API connection issue: {request.status_code}")
+            raise Exception("failed to retrieve information (double check username endtered is correct)")
+        return request
 
     def get_uuid(self, name: str) -> str:
-
-        request = requests.get(USER_PROFILE_URL + name)
+        request = self.do_request(USER_PROFILE_URL, name)
         response = request.json()
         uuid = response["id"]
         return uuid
 
     def get_skin_url(self, uuid: str) -> str:
-        request = requests.get(USER_SKIN_URL + uuid)
+        request = self.do_request(USER_SKIN_URL, uuid)
         response = request.json()
         value = response["properties"]
         value = value[0]
@@ -32,15 +39,12 @@ class API():
         skin_url = skin_url["url"]
         return skin_url
 
-
+"""
 if __name__ == "__main__":
     api = API()
-    uuid = api.get_uuid("namehere")
+    uuid = api.get_uuid("your_account_name_here")
     print(uuid)
-    api.get_skin_url(uuid)
+    url = api.get_skin_url(uuid)
+    print(url)
 
-
-
-
-
-
+"""
